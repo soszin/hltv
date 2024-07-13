@@ -2,10 +2,11 @@ package hltv
 
 import (
 	"fmt"
-	"github.com/PuerkitoBio/goquery"
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/PuerkitoBio/goquery"
 )
 
 type Ranking struct {
@@ -16,11 +17,17 @@ type Ranking struct {
 
 func (client *Client) GetRanking() ([]Ranking, error) {
 	res, err := Fetch(fmt.Sprintf("%v/ranking/teams", client.baseUrl))
-
 	if err != nil {
+		// println nie powinien być używany, w docsach jest info
+		// " it is not guaranteed to stay in the language."
 		println(err.Error())
 		return nil, err
 	}
+	// response.Body nie jest zamykany
+	// defer res.Body.Close()
+
+	// tutaj można by było preallokować pamięć
+	// przy użyciu document.Find(".ranked-team").Length() i make
 	var rankingList []Ranking
 
 	document, err := goquery.NewDocumentFromReader(res.Body)
@@ -31,8 +38,12 @@ func (client *Client) GetRanking() ([]Ranking, error) {
 
 		positionString := strings.Replace(s.Find(".position").Text(), "#", "", -1)
 		position, _ := strconv.Atoi(positionString)
+		// brak error handlingu
 
 		var points int
+		// ten regexp nie musi być kompilowany przy każdym wywołaniu tej metody
+		// mógłbyś go wrzucić jako globalną zmienną
+		// regexp.Compile jest kosztowny
 		pointsRegexp := regexp.MustCompile(`\((\d+)\s.*\)$`)
 		pointStrings := pointsRegexp.FindStringSubmatch(s.Find(".points").Text())
 		if len(pointStrings) > 0 {
@@ -43,6 +54,9 @@ func (client *Client) GetRanking() ([]Ranking, error) {
 
 		var teamId int
 		teamUrl, _ := s.Find(".more .moreLink").First().Attr("href")
+		// ten regexp nie musi być kompilowany przy każdym wywołaniu tej metody
+		// mógłbyś go wrzucić jako globalną zmienną
+		// regexp.Compile jest kosztowny
 		r := regexp.MustCompile(`/team/(\d+)/.*`)
 		teamIdString := r.FindStringSubmatch(teamUrl)
 		if len(teamIdString) > 0 {
