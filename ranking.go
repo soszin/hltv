@@ -15,15 +15,19 @@ type Ranking struct {
 }
 
 func (client *Client) GetRanking() ([]Ranking, error) {
-	res, err := Fetch(fmt.Sprintf("%v/ranking/teams", client.baseUrl))
-
+	res, err := client.fetch(fmt.Sprintf("%v/ranking/teams", client.baseURL))
 	if err != nil {
 		println(err.Error())
 		return nil, err
 	}
+	defer res.Body.Close()
+
 	var rankingList []Ranking
 
 	document, err := goquery.NewDocumentFromReader(res.Body)
+	if err != nil {
+		return nil, err
+	}
 
 	document.Find(".ranked-team").Each(func(i int, s *goquery.Selection) {
 
@@ -41,14 +45,14 @@ func (client *Client) GetRanking() ([]Ranking, error) {
 			points = 0
 		}
 
-		var teamId int
+		var teamID int
 		teamUrl, _ := s.Find(".more .moreLink").First().Attr("href")
 		r := regexp.MustCompile(`/team/(\d+)/.*`)
 		teamIdString := r.FindStringSubmatch(teamUrl)
 		if len(teamIdString) > 0 {
-			teamId, _ = strconv.Atoi(teamIdString[1])
+			teamID, _ = strconv.Atoi(teamIdString[1])
 		} else {
-			teamId = 0
+			teamID = 0
 		}
 
 		ranking := Ranking{
@@ -57,7 +61,7 @@ func (client *Client) GetRanking() ([]Ranking, error) {
 		}
 
 		ranking.Team = &Team{
-			Id:   teamId,
+			ID:   teamID,
 			Name: name,
 		}
 

@@ -8,7 +8,7 @@ import (
 )
 
 type Team struct {
-	Id   int    `json:"id"`
+	ID   int    `json:"id"`
 	Name string `json:"name"`
 }
 
@@ -22,8 +22,8 @@ type TeamDetails struct {
 	AveragePlayerAge float32 `json:"average_player_age"`
 }
 
-func (client *Client) GetTeam(teamId int) (*TeamDetails, error) {
-	res, err := Fetch(fmt.Sprintf("%v/team/%v/teamX", client.baseUrl, teamId))
+func (client *Client) GetTeam(teamID int) (*TeamDetails, error) {
+	res, err := client.fetch(fmt.Sprintf("%v/team/%v/teamX", client.baseURL, teamID))
 	if err != nil {
 		println(err.Error())
 		return nil, err
@@ -35,7 +35,7 @@ func (client *Client) GetTeam(teamId int) (*TeamDetails, error) {
 	avgAge, _ := strconv.ParseFloat(document.Find(".profile-team-stat:nth-child(3) span.right").Text(), 32)
 
 	var teamDetails TeamDetails
-	teamDetails.Id = teamId
+	teamDetails.ID = teamID
 	teamDetails.Name = document.Find(".profile-team-name").Text()
 	teamDetails.LogoURL = document.Find(".profile-team-logo-container img").AttrOr("src", "")
 	teamDetails.Country = document.Find(".team-country img").AttrOr("title", "")

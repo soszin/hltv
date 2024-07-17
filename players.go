@@ -10,7 +10,7 @@ import (
 )
 
 type Player struct {
-	Id          int    `json:"id"`
+	ID          int    `json:"id"`
 	Name        string `json:"name"`
 	Nickname    string `json:"nickname"`
 	YearOfBirth int    `json:"year_of_birth"`
@@ -22,8 +22,8 @@ type PlayerDetails struct {
 	CurrentTeam *Team  `json:"current_team"`
 }
 
-func (client *Client) GetPlayer(playerId int) (*PlayerDetails, error) {
-	res, err := Fetch(fmt.Sprintf("%v/player/%v/playerX", client.baseUrl, playerId))
+func (client *Client) GetPlayer(playerID int) (*PlayerDetails, error) {
+	res, err := client.fetch(fmt.Sprintf("%v/player/%v/playerX", client.baseURL, playerID))
 	if err != nil {
 		println(err.Error())
 		return nil, err
@@ -35,7 +35,7 @@ func (client *Client) GetPlayer(playerId int) (*PlayerDetails, error) {
 
 	age, _ := strconv.Atoi(strings.ReplaceAll(document.Find(".playerAge span[itemprop='text']").Text(), " years", ""))
 
-	playerDetails.Id = playerId
+	playerDetails.ID = playerID
 	playerDetails.Name = document.Find(".playerRealname").Text()
 	playerDetails.Nickname = document.Find(".playerNickname").Text()
 	playerDetails.YearOfBirth = time.Now().Year() - age
@@ -49,7 +49,7 @@ func (client *Client) GetPlayer(playerId int) (*PlayerDetails, error) {
 		teamUrlMatches := teamUrlRegexp.FindStringSubmatch(teamUrl)
 		teamId, _ := strconv.Atoi(teamUrlMatches[1])
 		playerDetails.CurrentTeam = &Team{
-			Id:   teamId,
+			ID:   teamId,
 			Name: teamName,
 		}
 	}
