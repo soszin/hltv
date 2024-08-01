@@ -4,12 +4,16 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/soszin/hltv"
+	"log"
 )
 
 func main() {
 	hltvClient := hltv.New()
 
-	ranking, _ := hltvClient.GetRanking()
-	jsonData, _ := json.MarshalIndent(ranking, "", "    ")
+	player, err := hltvClient.GetMatch(2373780)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	jsonData, _ := json.MarshalIndent(player, "", "    ")
 	fmt.Printf("%s\n", jsonData)
 }

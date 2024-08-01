@@ -9,7 +9,7 @@ import (
 func main() {
 	hltvClient := hltv.New()
 
-	ranking, _ := hltvClient.GetPlayer(11893)
-	jsonData, _ := json.Marshal(ranking)
+	player, _ := hltvClient.GetPlayer(11893)
+	jsonData, _ := json.MarshalIndent(player, "", "    ")
 	fmt.Printf("%s\n", jsonData)
 }

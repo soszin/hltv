@@ -22,14 +22,18 @@ type PlayerDetails struct {
 	CurrentTeam *Team  `json:"current_team"`
 }
 
+var teamUrlRegexp = regexp.MustCompile(`/team/(\d+)/(.*)`)
+
 func (client *Client) GetPlayer(playerID int) (*PlayerDetails, error) {
-	res, err := client.fetch(fmt.Sprintf("%v/player/%v/playerX", client.baseURL, playerID))
+	res, err := client.fetch(fmt.Sprintf("%v/player/%v/og-vs-complexity-blast-premier-fall-groups-2024", client.baseURL, playerID))
 	if err != nil {
-		println(err.Error())
 		return nil, err
 	}
 
 	document, err := goquery.NewDocumentFromReader(res.Body)
+	if err != nil {
+		return nil, err
+	}
 
 	var playerDetails PlayerDetails
 
@@ -45,7 +49,6 @@ func (client *Client) GetPlayer(playerID int) (*PlayerDetails, error) {
 	teamName := document.Find(".playerTeam a").Text()
 
 	if teamUrl != "" {
-		teamUrlRegexp := regexp.MustCompile(`/team/(\d+)/(.*)`)
 		teamUrlMatches := teamUrlRegexp.FindStringSubmatch(teamUrl)
 		teamId, _ := strconv.Atoi(teamUrlMatches[1])
 		playerDetails.CurrentTeam = &Team{

@@ -14,10 +14,11 @@ type Ranking struct {
 	Team     *Team `json:"team"`
 }
 
+var pointsRegexp = regexp.MustCompile(`\((\d+)\s.*\)$`)
+
 func (client *Client) GetRanking() ([]Ranking, error) {
 	res, err := client.fetch(fmt.Sprintf("%v/ranking/teams", client.baseURL))
 	if err != nil {
-		println(err.Error())
 		return nil, err
 	}
 	defer res.Body.Close()
@@ -37,7 +38,6 @@ func (client *Client) GetRanking() ([]Ranking, error) {
 		position, _ := strconv.Atoi(positionString)
 
 		var points int
-		pointsRegexp := regexp.MustCompile(`\((\d+)\s.*\)$`)
 		pointStrings := pointsRegexp.FindStringSubmatch(s.Find(".points").Text())
 		if len(pointStrings) > 0 {
 			points, _ = strconv.Atoi(pointStrings[1])

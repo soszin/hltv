@@ -30,6 +30,10 @@ func (client *Client) GetTeam(teamID int) (*TeamDetails, error) {
 	}
 
 	document, err := goquery.NewDocumentFromReader(res.Body)
+	if err != nil {
+		return nil, err
+	}
+
 	worldRanking, _ := strconv.Atoi(strings.Replace(document.Find(".profile-team-stat:nth-child(1) a").Text(), "#", "", -1))
 	top30, _ := strconv.Atoi(document.Find(".profile-team-stat:nth-child(2) span.right").Text())
 	avgAge, _ := strconv.ParseFloat(document.Find(".profile-team-stat:nth-child(3) span.right").Text(), 32)

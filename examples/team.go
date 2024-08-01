@@ -10,6 +10,6 @@ func main() {
 	hltvClient := hltv.New()
 
 	team, _ := hltvClient.GetTeam(9565)
-	jsonData, _ := json.Marshal(team)
+	jsonData, _ := json.MarshalIndent(team, "", "    ")
 	fmt.Printf("%s\n", jsonData)
 }
