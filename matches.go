@@ -7,14 +7,22 @@ import (
 	"strings"
 )
 
+type Match struct {
+	ID    int         `json:"id"`
+	Teams []MatchTeam `json:"teams"`
+	Event event       `json:"event"`
+	Maps  []matchMap  `json:"maps"`
+}
+
 type MatchTeam struct {
+	ID      int           `json:"id"`
 	Name    string        `json:"name"`
 	Logo    string        `json:"logo"`
 	Score   int           `json:"score"`
-	Players []PLayerStats `json:"players"`
+	Players []playerStats `json:"players"`
 }
 
-type PLayerStats struct {
+type playerStats struct {
 	ID       int     `json:"id"`
 	Name     string  `json:"name"`
 	Nickname string  `json:"nickname"`
@@ -25,17 +33,27 @@ type PLayerStats struct {
 	Rating   float64 `json:"rating"`
 }
 
-type Event struct {
+type matchMap struct {
+	Name  string    `json:"name"`
+	Teams []mapTeam `json:"teams"`
+}
+
+type mapTeam struct {
+	Name    string    `json:"name"`
+	Results mapResult `json:"results"`
+}
+
+type mapResult struct {
+	Total int `json:"total"`
+	Ct    int `json:"ct"`
+	Tt    int `json:"tt"`
+}
+
+type event struct {
 	ID   int    `json:"id"`
 	Name string `json:"name"`
 	Logo string `json:"logo"`
 	URL  string `json:"url"`
-}
-
-type Match struct {
-	ID    int         `json:"id"`
-	Teams []MatchTeam `json:"teams"`
-	Event Event       `json:"event"`
 }
 
 func (client *Client) GetMatch(matchID int) (*Match, error) {
@@ -61,10 +79,14 @@ func (client *Client) GetMatch(matchID int) (*Match, error) {
 
 	match.Event = getEvent(document.Find(".matchSidebarEvent"), teamContainer)
 
+	document.Find(".mapholder").Each(func(i int, mapContainer *goquery.Selection) {
+		match.Maps = append(match.Maps, getMatchMap(mapContainer))
+	})
+
 	return &match, nil
 }
 
-func getEvent(eventContainer *goquery.Selection, teamContainer *goquery.Selection) (event Event) {
+func getEvent(eventContainer *goquery.Selection, teamContainer *goquery.Selection) (event event) {
 
 	eventLink := teamContainer.Find(".event a")
 	eventURL := eventLink.AttrOr("href", "")
@@ -77,6 +99,9 @@ func getEvent(eventContainer *goquery.Selection, teamContainer *goquery.Selectio
 }
 
 func getTeam(teamContainer *goquery.Selection, playerContainer *goquery.Selection) (team MatchTeam) {
+
+	teamURL := playerContainer.Find("a").AttrOr("href", "")
+	team.ID = idFromURL(teamURL, 2)
 	team.Name = teamContainer.Find(".teamName").Text()
 	team.Logo = teamContainer.Find(".logo").AttrOr("src", "")
 	team.Score, _ = strconv.Atoi(teamContainer.Find(".teamName").Parent().Next().Text())
@@ -91,7 +116,7 @@ func getTeam(teamContainer *goquery.Selection, playerContainer *goquery.Selectio
 	return
 }
 
-func getStats(playerRow *goquery.Selection) (stats PLayerStats) {
+func getStats(playerRow *goquery.Selection) (stats playerStats) {
 	playerURL := playerRow.Find("a").AttrOr("href", "")
 	stats.ID = idFromURL(playerURL, 2)
 
@@ -114,4 +139,45 @@ func getStats(playerRow *goquery.Selection) (stats PLayerStats) {
 	rating, _ := strconv.ParseFloat(playerRow.Find(".rating").Text(), 64)
 	stats.Rating = rating
 	return
+}
+
+func getMatchMap(mapContainer *goquery.Selection) (matchMap matchMap) {
+	matchMap.Name = mapContainer.Find(".mapname").Text()
+
+	names := mapContainer.Find(".results-teamname")
+	scores := mapContainer.Find(".results-team-score")
+
+	var teamA, teamB *mapTeam
+
+	halfScores := mapContainer.Find(".results-center-half-score").Children()
+
+	teamA = getMapTeam(names.First().Text(), scores.First().Text(), halfScores.Eq(1), halfScores.Eq(5))
+	teamB = getMapTeam(names.Last().Text(), scores.Last().Text(), halfScores.Eq(3), halfScores.Eq(7))
+
+	matchMap.Teams = append(matchMap.Teams, *teamA, *teamB)
+
+	return
+}
+
+func getMapTeam(name string, score string, halfScores ...*goquery.Selection) *mapTeam {
+	total, _ := strconv.Atoi(score)
+
+	var ct, tt int
+
+	for _, half := range halfScores {
+		if half.HasClass("ct") {
+			ct, _ = strconv.Atoi(half.Text())
+		} else {
+			tt, _ = strconv.Atoi(half.Text())
+		}
+	}
+
+	return &mapTeam{
+		Name: name,
+		Results: mapResult{
+			Total: total,
+			Ct:    ct,
+			Tt:    tt,
+		},
+	}
 }

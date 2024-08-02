@@ -10,7 +10,7 @@ import (
 func main() {
 	hltvClient := hltv.New()
 
-	player, err := hltvClient.GetMatch(2373780)
+	player, err := hltvClient.GetMatch(2373786)
 	if err != nil {
 		log.Fatalln(err)
 	}
