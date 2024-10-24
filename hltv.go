@@ -71,12 +71,27 @@ func (client *Client) fetch(url string) (resp *http.Response, err error) {
 	return response, err
 }
 
-func pathFromURL(url string, index int) (path string) {
-	path = strings.Split(url, "/")[index]
+func pathFromURL(url string, index int) (path string, err error) {
+
+	pathParts := strings.Split(url, "/")
+	if len(pathParts) > index {
+		path = pathParts[index]
+	} else {
+		err = errors.New("index out of range")
+	}
 	return
 }
 
-func idFromURL(url string, index int) (ID int) {
-	ID, _ = strconv.Atoi(pathFromURL(url, index))
+func idFromURL(url string, index int) (ID int, err error) {
+	path, err := pathFromURL(url, index)
+	if err != nil {
+		return 0, err
+	}
+
+	ID, err = strconv.Atoi(path)
+	if err != nil {
+		return 0, err
+	}
+
 	return
 }
